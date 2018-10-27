@@ -1,0 +1,4 @@
+include README.md
+recursive-include octoprint_myminifactory/templates *
+recursive-include octoprint_myminifactory/translations *
+recursive-include octoprint_myminifactory/static *

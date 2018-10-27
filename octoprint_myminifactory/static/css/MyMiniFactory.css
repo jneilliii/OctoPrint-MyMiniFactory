@@ -1,0 +1,9 @@
+div.myminifactory_logo {
+	background-image: url(/plugin/myminifactory/static/images/myminifactory_logo_128.png);
+    background-size: contain;
+    vertical-align: middle;
+    background-repeat: no-repeat;
+	float: left;
+	width: 24px;
+	height: 20px;
+}
