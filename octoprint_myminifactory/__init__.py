@@ -23,6 +23,7 @@ class MyMiniFactoryPlugin(octoprint.plugin.SettingsPlugin,
 	def __init__(self):
 		self._mqtt = None
 		self._mqtt_connected = False
+		self._mqtt_tls_set = False
 		self._current_task_id = None
 		self.mmf_status_updater = None
 		self._current_action_code = "000"
@@ -242,11 +243,13 @@ class MyMiniFactoryPlugin(octoprint.plugin.SettingsPlugin,
 
 	def mqtt_connect(self):
 		broker_url = "mqtt.myminifactory.com"
-		broker_port = 1883 # 8883 for TLS later
 		broker_username = self._settings.get(["client_name"])
 		broker_password = self._settings.get(["client_key"])
+		broker_insecure_port = 1883
+		broker_tls_port = 8883
+		broker_port = broker_tls_port
 		broker_keepalive = 60
-		broker_tls = dict() # for use later with TLS
+		use_tls = True
 		broker_tls_insecure = False # may need to set this to true
 
 		import paho.mqtt.client as mqtt
@@ -259,22 +262,20 @@ class MyMiniFactoryPlugin(octoprint.plugin.SettingsPlugin,
 		if broker_username is not None:
 			self._mqtt.username_pw_set(broker_username, password=broker_password)
 
-		tls_active = False
-		if broker_tls:
-			tls_args = dict((key, value) for key, value in broker_tls.items() if value)
-			ca_certs = tls_args.pop("ca_certs", None)
-			if ca_certs: # cacerts must not be None for tls_set to work
-				self._mqtt.tls_set(ca_certs, **tls_args)
-				tls_active = True
+		if use_tls and not self._mqtt_tls_set:
+			self._mqtt.tls_set() # Uses the default certification authority of the system https://pypi.org/project/paho-mqtt/#tls-set
+			self._mqtt_tls_set = True
 
-		if broker_tls_insecure and tls_active:
+		if broker_tls_insecure and not self._mqtt_tls_set:
 			self._mqtt.tls_insecure_set(broker_tls_insecure)
+			broker_port = broker_insecure_port # Fallbacks to the non-secure port 1883
 
 		self._mqtt.on_connect = self._on_mqtt_connect
 		self._mqtt.on_disconnect = self._on_mqtt_disconnect
 		self._mqtt.on_message = self._on_mqtt_message
 
 		self._mqtt.connect_async(broker_url, broker_port, keepalive=broker_keepalive)
+		# self._mqtt.connect_async(broker_url, broker_port, keepalive=broker_keepalive)
 		if self._mqtt.loop_start() == mqtt.MQTT_ERR_INVAL:
 			self._logger.error("Could not start MQTT connection, loop_start returned MQTT_ERR_INVAL")
 
