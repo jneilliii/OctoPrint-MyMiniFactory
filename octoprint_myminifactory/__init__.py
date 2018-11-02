@@ -70,7 +70,6 @@ class MyMiniFactoryPlugin(octoprint.plugin.SettingsPlugin,
 			self._current_action_code = "000"
 		elif event == Events.PRINT_CANCELLED:
 			self._current_action_code = "000"
-			self._current_task_id = ""
 		if event == Events.PRINT_PAUSED:
 			self._current_action_code = "101"
 		if event == Events.PRINT_RESUMED:
@@ -325,7 +324,6 @@ class MyMiniFactoryPlugin(octoprint.plugin.SettingsPlugin,
 		if action["action_code"] == "103":
 			self._logger.debug("received cancel command")
 			self._current_action_code = "103"
-			self._current_task_id = ""
 			self._printer.cancel_print()
 
 		if action["action_code"] == "104":
