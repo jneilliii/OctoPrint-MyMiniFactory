@@ -16,7 +16,9 @@ $(function() {
 
 		self.printer_model = ko.observable();
 		self.printer_manufacturer = ko.observable();
+		self.printer_serial_number = ko.observable();
 		self.supported_printers = ko.observableArray();
+		self.printer_token = ko.observable();
 		self.registering = ko.observable(false);
 		self.forgetting = ko.observable(false);
 		self.registration_complete = ko.observable();
@@ -42,6 +44,8 @@ $(function() {
 			self.supported_printers(self.settingsViewModel.settings.plugins.myminifactory.supported_printers());
 			self.printer_model(self.settingsViewModel.settings.plugins.myminifactory.printer_model());
 			self.printer_manufacturer(self.settingsViewModel.settings.plugins.myminifactory.printer_manufacturer());
+			self.printer_serial_number(self.settingsViewModel.settings.plugins.myminifactory.printer_serial_number());
+			self.printer_token(self.settingsViewModel.settings.plugins.myminifactory.printer_token());
 		}
 		
 		self.onSettingsShown = function() {
@@ -60,12 +64,16 @@ $(function() {
 			self.supported_printers(self.settingsViewModel.settings.plugins.myminifactory.supported_printers());
 			self.printer_model(self.settingsViewModel.settings.plugins.myminifactory.printer_model());
 			self.printer_manufacturer(self.settingsViewModel.settings.plugins.myminifactory.printer_manufacturer());
+			self.printer_serial_number(self.settingsViewModel.settings.plugins.myminifactory.printer_serial_number());
+			self.printer_token(self.settingsViewModel.settings.plugins.myminifactory.printer_token());
 		}
 		
 		self.onSettingsBeforeSave = function() {
 			self.settingsViewModel.settings.plugins.myminifactory.supported_printers(self.supported_printers());
 			self.settingsViewModel.settings.plugins.myminifactory.printer_model(self.printer_model());
 			self.settingsViewModel.settings.plugins.myminifactory.printer_manufacturer(self.printer_manufacturer());
+			self.settingsViewModel.settings.plugins.myminifactory.printer_serial_number(self.printer_serial_number());
+			self.settingsViewModel.settings.plugins.myminifactory.printer_token(self.printer_token());
 		}
 
 		self.onDataUpdaterPluginMessage = function(plugin, data) {
@@ -88,6 +96,7 @@ $(function() {
 				console.log(data.qr_image_url);
 				self.registering(false);
 				self.qr_image_url(data.qr_image_url);
+				self.printer_serial_number(data.printer_serial_number);
 				self.registration_complete(true);
 				return;
 			}

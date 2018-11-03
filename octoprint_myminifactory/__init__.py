@@ -141,7 +141,7 @@ class MyMiniFactoryPlugin(octoprint.plugin.SettingsPlugin,
 			if response.status_code == 200:
 				serialized_response = json.loads(response.text)
 				self._logger.debug(json.dumps(serialized_response))
-				if serialized_response["printer_token"] != self._settings.get(["printer_token"]):
+				if serialized_response["printer_token"] != self._settings.get(["printer_token"]) and self._settings.get(["printer_token"]) == "":
 					self.mqtt_disconnect(force=True)
 					self._settings.set(["printer_token"],serialized_response["printer_token"])
 					self._settings.set(["printer_manufacturer"],data["manufacturer"])
@@ -150,17 +150,17 @@ class MyMiniFactoryPlugin(octoprint.plugin.SettingsPlugin,
 					self._settings.save()
 					self.mqtt_connect()
 					self.on_after_startup()
-				self._plugin_manager.send_plugin_message(self._identifier, dict(qr_image_url=serialized_response["qr_image_url"]))
+				self._plugin_manager.send_plugin_message(self._identifier, dict(qr_image_url=serialized_response["qr_image_url"],printer_serial_number=self._settings.get(["printer_serial_number"])))
 			else:
 				self._logger.debug("API Error: %s" % response)
 				self._plugin_manager.send_plugin_message(self._identifier, dict(error=response.status_code))
 				
 		if command == "forget_printer":
+			self.mqtt_disconnect(force=True)								   
 			self._settings.set(["printer_serial_number"],"")
 			self._settings.set(["printer_token"],"")
 			self._settings.set_boolean(["registration_complete"], False)
 			self._settings.save()
-			self.mqtt_disconnect(force=True)
 			self._plugin_manager.send_plugin_message(self._identifier, dict(printer_removed=True))
 
 	##~~ PrinterCallback
@@ -274,7 +274,6 @@ class MyMiniFactoryPlugin(octoprint.plugin.SettingsPlugin,
 		self._mqtt.on_message = self._on_mqtt_message
 
 		self._mqtt.connect_async(broker_url, broker_port, keepalive=broker_keepalive)
-		# self._mqtt.connect_async(broker_url, broker_port, keepalive=broker_keepalive)
 		if self._mqtt.loop_start() == mqtt.MQTT_ERR_INVAL:
 			self._logger.error("Could not start MQTT connection, loop_start returned MQTT_ERR_INVAL")
 

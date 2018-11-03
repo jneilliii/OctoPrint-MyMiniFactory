@@ -1,6 +1,12 @@
 <h4>MyMiniFactory Settings</h4>
 <form class="form-horizontal">
     <div class="control-group">
+        <label class="control-label">{{ _('Serial Number') }}</label>
+        <div class="controls">
+            <input type="text" id="printer_serial_number" class="input-block-level" disabled data-bind="value: printer_serial_number"/>
+        </div>
+    </div>
+    <div class="control-group">
         <label class="control-label">{{ _('Printer Manufacturer') }}</label>
         <div class="controls">
             <select id="printer_manufacturer" class="input-block-level" data-bind="disable: registration_complete(),options: supported_manufacturers,optionsText: 'brand',optionsValue: 'brand',value: printer_manufacturer"></select>
@@ -22,7 +28,8 @@
 		<img alt="MyMiniFactory QR Code" data-bind="attr: {src:qr_image_url()}" width="300px" height="300px">
 	</div>
     <div class="row-fluid" data-bind="visible: qr_image_url().length > 0" style="display: none;text-align: center;padding-bottom: 25px;">
-		<div style="width: 230px;display: inline-block;">Scan the above QR code in the MyMiniFactory mobile application to complete printer registration.</div>
+		<div style="max-width: 230px;width: 230px;display: inline-block;">Scan the above QR code in the MyMiniFactory mobile application to complete printer registration.</div>
+		<div class="row-fluid" data-bind="if: registration_complete()"><span data-bind="text: printer_token"/></span></div>
 	</div>
 	<div class="row-fluid" style="text-align: center;">
 		<button class="btn btn-primary" data-bind="disable: registering(),click: get_qr_image_url, visible: !registration_complete()" style="display:none;"><i class="fa fa-spinner fa-spin" data-bind="visible: registering()" style="display: none;"></i> Register</button> <button class="btn btn-danger" data-bind="disable: forgetting(),click: forget_registration, visible: registration_complete()" style="display:none;"><i class="fa fa-spinner fa-spin" data-bind="visible: forgetting()" style="display: none;"></i> Forget</button>
