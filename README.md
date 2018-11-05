@@ -19,7 +19,7 @@ From within the mobile application find a verified __Click & Print__ model and c
 
 ## Disclaimer
 
-This plugin adds a tab to the OctoPrint interface that loads the MyMiniFactory&reg; website within an iframe with consent from My Mini Factory Ltd.
+This plugin adds a tab to the OctoPrint interface that loads the MyMiniFactory&reg; website within an iframe with consent from My Mini Factory Ltd. It was built by [jneilliii](https://github.com/jneilliii) using the [MyMiniFactory API](https://www.myminifactory.com/pages/for-developers).
 
 The MyMiniFactory&reg; name, logo, website, and the __Click & Print__ service is copyright, trademark, and owned by My Mini Factory Ltd., see their [Terms and Conditions](https://www.myminifactory.com/pages/terms-and-conditions) for additional information regarding the use of their website and service(s).
 
