@@ -3,6 +3,7 @@ from __future__ import absolute_import
 from uuid import getnode as get_mac
 from octoprint.server import user_permission
 from octoprint.util import RepeatedTimer
+from octoprint.util import version
 from octoprint.events import Events
 from octoprint.filemanager.analysis import QueueEntry
 from datetime import datetime
@@ -156,7 +157,7 @@ class MyMiniFactoryPlugin(octoprint.plugin.SettingsPlugin,
 				self._plugin_manager.send_plugin_message(self._identifier, dict(error=response.status_code))
 				
 		if command == "forget_printer":
-			self.mqtt_disconnect(force=True)								   
+			self.mqtt_disconnect(force=True)
 			self._settings.set(["printer_serial_number"],"")
 			self._settings.set(["printer_token"],"")
 			self._settings.set_boolean(["registration_complete"], False)
@@ -167,9 +168,9 @@ class MyMiniFactoryPlugin(octoprint.plugin.SettingsPlugin,
 
 	def on_printer_add_temperature(self, data):
 		if self._settings.get_boolean(["registration_complete"]):
-			if data["tool0"]:
+			if data.get("tool0"):
 				self._current_temp_hotend = data["tool0"]["actual"]
-			if data["bed"]:
+			if data.get("bed"):
 				self._current_temp_bed = data["bed"]["actual"]
 
 	##~~ MyMiniFactory Functions
@@ -226,7 +227,10 @@ class MyMiniFactoryPlugin(octoprint.plugin.SettingsPlugin,
 				
 			# Add downloaded file to analysisqueue
 			printer_profile = self._printer_profile_manager.get("_default")
-			entry = QueueEntry(action["filename"],gcode_download_file,"gcode","local",gcode_download_file, printer_profile)
+			if version.get_octoprint_version() > version.get_comparable_version("1.3.9"):
+				entry = QueueEntry(action["filename"],gcode_download_file,"gcode","local",gcode_download_file, printer_profile, None)
+			else:
+				entry = QueueEntry(action["filename"],gcode_download_file,"gcode","local",gcode_download_file, printer_profile)
 			self._analysis_queue.enqueue(entry,high_priority=True) 
 
 			# Select file downloaded and start printing if auto_start_print is enabled and not already printing

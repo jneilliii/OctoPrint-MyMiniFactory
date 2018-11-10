@@ -48,11 +48,11 @@ $(function() {
 			self.printer_token(self.settingsViewModel.settings.plugins.myminifactory.printer_token());
 		}
 		
-		self.onSettingsShown = function() {
+/* 		self.onSettingsShown = function() {
 			if(self.registration_complete()){
 				self.get_qr_image_url();
 			}
-		}
+		} */
 		
 		self.onSettingsHidden = function() {
 			if(self.registration_complete()){
@@ -105,6 +105,8 @@ $(function() {
 				self.qr_image_url('');
 				self.registration_complete(false);
 				self.forgetting(false);
+				self.printer_serial_number('');
+				$("#MyMiniFactoryForgetWarning").modal("hide");
 			}
 		}
 		
@@ -132,10 +134,18 @@ $(function() {
 				contentType: "application/json; charset=UTF-8"
 			});
 		}
+		
+		self.cancelClick = function(data) {
+			self.forgetting(false);
+		}
+		
+		self.confirm_forget = function(){
+			self.forgetting(true);
+			$("#MyMiniFactoryForgetWarning").modal("show");
+		}
 
 		self.forget_registration = function(){
 			console.log('Removing configured printer locally.');
-			self.forgetting(true);
 			$.ajax({
 				url: API_BASEURL + "plugin/myminifactory",
 				type: "POST",
