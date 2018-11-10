@@ -18,10 +18,10 @@
             <select id="printer_model" class="input-block-level" data-bind="disable: registration_complete(),options: supported_printers_filtered,optionsText: 'name',optionsValue: 'model',value: printer_model"></select>
         </div>
     </div>
-	<div class="row-fluid" data-bind="visible: qr_image_url().length == 0 && (registration_complete() || registering())" style="display: none;text-align: center;padding-bottom: 25px;">
+	<div class="row-fluid" data-bind="visible: qr_image_url().length == 0 && registering()" style="display: none;text-align: center;padding-bottom: 25px;">
 		<i class="fa fa-spinner fa-pulse" style="font-size: 150px;padding: 75px 75px;"></i>
 	</div>
-    <div class="row-fluid" data-bind="visible: qr_image_url().length == 0 && (registration_complete() || registering())" style="display: none;text-align: center;padding-bottom: 25px;">
+    <div class="row-fluid" data-bind="visible: qr_image_url().length == 0 && registering()" style="display: none;text-align: center;padding-bottom: 25px;">
 		<div style="width: 230px;display: inline-block;"><br/>Please wait retrieving QR code.<br/></div>
 	</div>
 	<div class="row-fluid" data-bind="visible: qr_image_url().length > 0" style="display: none;text-align: center;">
@@ -32,6 +32,25 @@
 		<div class="row-fluid" data-bind="if: registration_complete()"><span data-bind="text: printer_token"/></span></div>
 	</div>
 	<div class="row-fluid" style="text-align: center;">
-		<button class="btn btn-primary" data-bind="disable: registering(),click: get_qr_image_url, visible: !registration_complete()" style="display:none;"><i class="fa fa-spinner fa-spin" data-bind="visible: registering()" style="display: none;"></i> Register</button> <button class="btn btn-danger" data-bind="disable: forgetting(),click: forget_registration, visible: registration_complete()" style="display:none;"><i class="fa fa-spinner fa-spin" data-bind="visible: forgetting()" style="display: none;"></i> Forget</button>
+		<button class="btn btn-primary" data-bind="disable: registering(),click: get_qr_image_url, visible: qr_image_url().length == 0"><i class="fa fa-spinner fa-spin" data-bind="visible: registering()" style="display: none;"></i> Get QR Code</button> <button class="btn btn-danger" data-bind="disable: forgetting(),click: confirm_forget, visible: registration_complete()" style="display:none;"><i class="fa fa-spinner fa-spin" data-bind="visible: forgetting()" style="display: none;"></i> Forget</button>
 	</div>
 </form>
+
+<div id="MyMiniFactoryForgetWarning" class="modal hide fade">
+    <div class="modal-header">
+        <a href="#" class="close" data-dismiss="modal" aria-hidden="true">&times;</a>
+        <h3>MyMiniFactory Warning</h3>
+    </div>
+    <div class="modal-body">
+		<p>
+            {{ _('Forgetting this printer will disconnect it from all registered users.') }}
+        </p>
+		<p>
+            {{ _('Are you sure you want to proceed?') }}
+        </p>
+    </div>
+    <div class="modal-footer">
+        <a href="#" class="btn" data-dismiss="modal" aria-hidden="true" data-bind="click: cancelClick">{{ _('Cancel') }}</a>
+        <a href="#" class="btn btn-danger" data-bind="click: forget_registration">{{ _('Proceed') }}</a>
+    </div>
+</div>
