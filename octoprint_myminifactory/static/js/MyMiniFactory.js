@@ -23,6 +23,8 @@ $(function() {
 		self.forgetting = ko.observable(false);
 		self.registration_complete = ko.observable();
 		self.qr_image_url = ko.observable('');
+		self.mmf_print_complete = ko.observable();
+		self.mmf_print_cancelled = ko.observable();
 		self.supported_manufacturers = ko.computed(function() {
 				var seen =[];
 				return ko.utils.arrayFilter(self.supported_printers(), function(item) {
@@ -46,13 +48,18 @@ $(function() {
 			self.printer_manufacturer(self.settingsViewModel.settings.plugins.myminifactory.printer_manufacturer());
 			self.printer_serial_number(self.settingsViewModel.settings.plugins.myminifactory.printer_serial_number());
 			self.printer_token(self.settingsViewModel.settings.plugins.myminifactory.printer_token());
+			self.mmf_print_complete(self.settingsViewModel.settings.plugins.myminifactory.mmf_print_complete());
+			self.mmf_print_cancelled(self.settingsViewModel.settings.plugins.myminifactory.mmf_print_cancelled());
 		}
 		
-/* 		self.onSettingsShown = function() {
-			if(self.registration_complete()){
-				self.get_qr_image_url();
+		self.onAfterBinding = function() {
+			if(self.mmf_print_complete()){
+				self.onDataUpdaterPluginMessage('myminifactory',{'mmf_print_complete':true});
 			}
-		} */
+			if(self.mmf_print_cancelled()){
+				self.onDataUpdaterPluginMessage('myminifactory',{'mmf_print_cancelled':true});
+			}
+		}
 		
 		self.onSettingsHidden = function() {
 			if(self.registration_complete()){
@@ -66,6 +73,8 @@ $(function() {
 			self.printer_manufacturer(self.settingsViewModel.settings.plugins.myminifactory.printer_manufacturer());
 			self.printer_serial_number(self.settingsViewModel.settings.plugins.myminifactory.printer_serial_number());
 			self.printer_token(self.settingsViewModel.settings.plugins.myminifactory.printer_token());
+			self.mmf_print_complete(self.settingsViewModel.settings.plugins.myminifactory.mmf_print_complete());
+			self.mmf_print_cancelled(self.settingsViewModel.settings.plugins.myminifactory.mmf_print_cancelled());
 		}
 		
 		self.onSettingsBeforeSave = function() {
@@ -134,8 +143,10 @@ $(function() {
 										}),
 										contentType: "application/json; charset=UTF-8"
 									}).done(function(data){
-												console.log(data);
-												notice.remove();
+												if(data.bed_cleared){
+													notice.remove();
+													self.mmf_print_complete(true);
+												}
 											});
 								}
 							},{addClass: 'hidden'}]

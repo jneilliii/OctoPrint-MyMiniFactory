@@ -28,7 +28,7 @@ class MyMiniFactoryPlugin(octoprint.plugin.SettingsPlugin,
 		self._mqtt_tls_set = False
 		self._current_task_id = None
 		self.mmf_status_updater = None
-		self._current_action_code = "000"
+		self._current_action_code = "999"
 		self._current_temp_hotend = 0
 		self._current_temp_bed = 0
 		self._mmf_print = False
@@ -37,7 +37,8 @@ class MyMiniFactoryPlugin(octoprint.plugin.SettingsPlugin,
 								"101":"printing",
 								"102":"printing",
 								"103":"free",
-								"104":"printing"}
+								"104":"printing",
+								"999":"offline"}
 
 	def initialize(self):
 		self._printer.register_callback(self)
@@ -54,8 +55,10 @@ class MyMiniFactoryPlugin(octoprint.plugin.SettingsPlugin,
 			registration_complete = False,
 			printer_token = "",
 			client_name = "octoprint_myminifactory",
-			client_key = "b4943605-52b5-4d13-94ee-34eb983a813f",
-			auto_start_print = True
+			client_key = "b4943605-52b5-4d13-94ee-34eb983a813f", #"acGxgLJmvgTZU2RDZ3vQaiitxc5Bf6DDeHL1",
+			auto_start_print = True,
+			mmf_print_complete = False,
+			mmf_print_cancelled = False
 		)
 
 	def get_settings_version(self):
@@ -69,15 +72,22 @@ class MyMiniFactoryPlugin(octoprint.plugin.SettingsPlugin,
 	def on_event(self, event, payload):
 		if event == Events.PRINT_STARTED:
 			self._current_action_code = "101"
+			self._settings.set_boolean(["mmf_print_complete"],False)
+			self._settings.set_boolean(["mmf_print_cancelled"],False)
+			self._settings.save()
 			if not self._mmf_print:
 				self._current_task_id = None
 		elif event == Events.PRINT_DONE:
 			if self._mmf_print: # Send message back to UI to confirm clearing of bed.
+				self._settings.set_boolean(["mmf_print_complete"],True)
+				self._settings.save()
 				self._plugin_manager.send_plugin_message(self._identifier, dict(mmf_print_complete=True))
 			else:
 				self._current_action_code = "000"
 		elif event == Events.PRINT_CANCELLED:
 			if self._mmf_print: # Send message back to UI to confirm clearing of bed.
+				self._settings.set_boolean(["mmf_print_cancelled"],True)
+				self._settings.save()
 				self._plugin_manager.send_plugin_message(self._identifier, dict(mmf_print_cancelled=True))
 			else:
 				self._current_action_code = "000"
@@ -89,6 +99,9 @@ class MyMiniFactoryPlugin(octoprint.plugin.SettingsPlugin,
 	##~~ StartupPlugin mixin
 
 	def on_startup(self, host, port):
+		if self._settings.get_boolean(["mmf_print_complete"]) == False and self._settings.get_boolean(["mmf_print_cancelled"]) == False:
+			self._current_action_code = "000"
+		
 		self.mqtt_connect()
 		
 		if not self._settings.get_boolean(["registration_complete"]):
@@ -176,6 +189,9 @@ class MyMiniFactoryPlugin(octoprint.plugin.SettingsPlugin,
 		if command == "mmf_print_complete":
 			self._mmf_print = False
 			self._current_action_code = "000"
+			self._settings.set_boolean(["mmf_print_complete"],False)
+			self._settings.set_boolean(["mmf_print_cancelled"],False)
+			self._settings.save()
 			return flask.jsonify(bed_cleared=True)
 
 	##~~ PrinterCallback
@@ -336,17 +352,20 @@ class MyMiniFactoryPlugin(octoprint.plugin.SettingsPlugin,
 		if action["action_code"] == "102":
 			self._logger.debug("received pause command")
 			# self._current_action_code = "102"
-			self._printer.pause_print()
+			if self._current_task_id:
+				self._printer.pause_print()
 
 		if action["action_code"] == "103":
 			self._logger.debug("received cancel command")
 			# self._current_action_code = "103"
-			self._printer.cancel_print()
+			if self._current_task_id:
+				self._printer.cancel_print()
 
 		if action["action_code"] == "104":
 			self._logger.debug("received resume command")
 			# self._current_action_code = "104"
-			self._printer.resume_print()
+			if self._current_task_id:
+				self._printer.resume_print()
 
 		if action["action_code"] == "300":
 			self._logger.debug("received status update request")
