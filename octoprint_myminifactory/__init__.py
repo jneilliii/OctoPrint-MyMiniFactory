@@ -8,6 +8,7 @@ from octoprint.events import Events
 from octoprint.filemanager.analysis import QueueEntry
 from datetime import datetime
 import requests
+import flask
 import json
 import time
 import octoprint.plugin
@@ -71,9 +72,15 @@ class MyMiniFactoryPlugin(octoprint.plugin.SettingsPlugin,
 			if not self._mmf_print:
 				self._current_task_id = None
 		elif event == Events.PRINT_DONE:
-			self._current_action_code = "000"
+			if self._mmf_print: # Send message back to UI to confirm clearing of bed.
+				self._plugin_manager.send_plugin_message(self._identifier, dict(mmf_print_complete=True))
+			else:
+				self._current_action_code = "000"
 		elif event == Events.PRINT_CANCELLED:
-			self._current_action_code = "000"
+			if self._mmf_print: # Send message back to UI to confirm clearing of bed.
+				self._plugin_manager.send_plugin_message(self._identifier, dict(mmf_print_cancelled=True))
+			else:
+				self._current_action_code = "000"
 		if event == Events.PRINT_PAUSED:
 			self._current_action_code = "101"
 		if event == Events.PRINT_RESUMED:
@@ -121,12 +128,11 @@ class MyMiniFactoryPlugin(octoprint.plugin.SettingsPlugin,
 	##~~ SimpleApiPlugin mixin
 
 	def get_api_commands(self):
-		return dict(register_printer=["manufacturer","model"],forget_printer=[])
+		return dict(register_printer=["manufacturer","model"],forget_printer=[],mmf_print_complete=[])
 
 	def on_api_command(self, command, data):
 		if not user_permission.can():
-			from flask import make_response
-			return make_response("Insufficient rights", 403)
+			return flask.make_response("Insufficient rights", 403)
 
 		if command == "register_printer":
 			# Generate serial number if it doesn't already exist.
@@ -166,6 +172,11 @@ class MyMiniFactoryPlugin(octoprint.plugin.SettingsPlugin,
 			self._settings.set_boolean(["registration_complete"], False)
 			self._settings.save()
 			self._plugin_manager.send_plugin_message(self._identifier, dict(printer_removed=True))
+			
+		if command == "mmf_print_complete":
+			self._mmf_print = False
+			self._current_action_code = "000"
+			return flask.jsonify(bed_cleared=True)
 
 	##~~ PrinterCallback
 
@@ -318,23 +329,23 @@ class MyMiniFactoryPlugin(octoprint.plugin.SettingsPlugin,
 
 		if action["action_code"] == "101":
 			self._logger.debug("received print command")
-			self._current_action_code = "101"
+			# self._current_action_code = "101"
 			self._current_task_id = action["task_id"]
 			self.download_file(action)
 
 		if action["action_code"] == "102":
 			self._logger.debug("received pause command")
-			self._current_action_code = "102"
+			# self._current_action_code = "102"
 			self._printer.pause_print()
 
 		if action["action_code"] == "103":
 			self._logger.debug("received cancel command")
-			self._current_action_code = "103"
+			# self._current_action_code = "103"
 			self._printer.cancel_print()
 
 		if action["action_code"] == "104":
 			self._logger.debug("received resume command")
-			self._current_action_code = "104"
+			# self._current_action_code = "104"
 			self._printer.resume_print()
 
 		if action["action_code"] == "300":

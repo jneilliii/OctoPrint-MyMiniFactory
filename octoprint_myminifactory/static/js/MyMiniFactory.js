@@ -108,6 +108,40 @@ $(function() {
 				self.printer_serial_number('');
 				$("#MyMiniFactoryForgetWarning").modal("hide");
 			}
+			
+			if(data.mmf_print_complete || data.mmf_print_cancelled){
+				self.notify = new PNotify({
+						title: 'MyMiniFactory Click and Print',
+						type: 'info',
+						text: '<div class="row-fluid" style="padding-top: 20px;"><p>MyMiniFactory Click and Print job ' + (data.mmf_print_complete ? 'complete' : 'cancelled') + '. Please clear the bed and press Ok below to free up the printer again.</p></div>',
+						hide: false,
+						buttons: {
+							closer: false,
+							sticker: false
+						},
+						confirm: {
+							confirm: true,
+							buttons: [{
+								text: 'Ok',
+								addClass: 'btn-primary',
+								click: function(notice) {
+									$.ajax({
+										url: API_BASEURL + "plugin/myminifactory",
+										type: "POST",
+										dataType: "json",
+										data: JSON.stringify({
+											command: "mmf_print_complete"
+										}),
+										contentType: "application/json; charset=UTF-8"
+									}).done(function(data){
+												console.log(data);
+												notice.remove();
+											});
+								}
+							},{addClass: 'hidden'}]
+						}
+						});
+			}
 		}
 		
 		self.onTabChange = function(current, previous) {
