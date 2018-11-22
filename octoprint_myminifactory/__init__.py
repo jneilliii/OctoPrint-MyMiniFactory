@@ -30,6 +30,7 @@ class MyMiniFactoryPlugin(octoprint.plugin.SettingsPlugin,
 		self._current_action_code = "000"
 		self._current_temp_hotend = 0
 		self._current_temp_bed = 0
+		self._mmf_print = False
 		self._printer_status = {"000":"free",
 								"100":"prepare",
 								"101":"printing",
@@ -67,6 +68,8 @@ class MyMiniFactoryPlugin(octoprint.plugin.SettingsPlugin,
 	def on_event(self, event, payload):
 		if event == Events.PRINT_STARTED:
 			self._current_action_code = "101"
+			if not self._mmf_print:
+				self._current_task_id = None
 		elif event == Events.PRINT_DONE:
 			self._current_action_code = "000"
 		elif event == Events.PRINT_CANCELLED:
@@ -235,6 +238,7 @@ class MyMiniFactoryPlugin(octoprint.plugin.SettingsPlugin,
 
 			# Select file downloaded and start printing if auto_start_print is enabled and not already printing
 			if self._printer.is_ready():
+				self._mmf_print = True
 				self._printer.select_file(action["filename"], False, printAfterSelect=self._settings.get_boolean(["auto_start_print"]))
 			else:
 				self._logger.debug("Printer not ready, not selecting file to print.")
@@ -321,7 +325,6 @@ class MyMiniFactoryPlugin(octoprint.plugin.SettingsPlugin,
 		if action["action_code"] == "102":
 			self._logger.debug("received pause command")
 			self._current_action_code = "102"
-			#self._current_task_id = action["task_id"]
 			self._printer.pause_print()
 
 		if action["action_code"] == "103":
@@ -332,7 +335,6 @@ class MyMiniFactoryPlugin(octoprint.plugin.SettingsPlugin,
 		if action["action_code"] == "104":
 			self._logger.debug("received resume command")
 			self._current_action_code = "104"
-			#self._current_task_id = action["task_id"]
 			self._printer.resume_print()
 
 		if action["action_code"] == "300":
@@ -392,21 +394,14 @@ class MyMiniFactoryPlugin(octoprint.plugin.SettingsPlugin,
 	##~~ Softwareupdate hook
 
 	def get_update_information(self):
-		# Define the configuration for your plugin to use with the Software Update
-		# Plugin here. See https://github.com/foosel/OctoPrint/wiki/Plugin:-Software-Update
-		# for details.
 		return dict(
 			MyMiniFactory=dict(
 				displayName="MyMiniFactory",
 				displayVersion=self._plugin_version,
-
-				# version check: github repository
 				type="github_release",
 				user="jneilliii",
 				repo="OctoPrint-MyMiniFactory",
 				current=self._plugin_version,
-
-				# update method: pip
 				pip="https://github.com/jneilliii/OctoPrint-MyMiniFactory/archive/{target_version}.zip"
 			)
 		)
