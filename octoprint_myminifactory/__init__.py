@@ -58,7 +58,8 @@ class MyMiniFactoryPlugin(octoprint.plugin.SettingsPlugin,
 			client_key = "b4943605-52b5-4d13-94ee-34eb983a813f", #"acGxgLJmvgTZU2RDZ3vQaiitxc5Bf6DDeHL1",
 			auto_start_print = True,
 			mmf_print_complete = False,
-			mmf_print_cancelled = False
+			mmf_print_cancelled = False,
+			bypass_bed_clear = False
 		)
 
 	def get_settings_version(self):
@@ -78,14 +79,14 @@ class MyMiniFactoryPlugin(octoprint.plugin.SettingsPlugin,
 			if not self._mmf_print:
 				self._current_task_id = None
 		elif event == Events.PRINT_DONE:
-			if self._mmf_print: # Send message back to UI to confirm clearing of bed.
+			if self._mmf_print and not self._settings.get_boolean(["bypass_bed_clear"]): # Send message back to UI to confirm clearing of bed.
 				self._settings.set_boolean(["mmf_print_complete"],True)
 				self._settings.save()
 				self._plugin_manager.send_plugin_message(self._identifier, dict(mmf_print_complete=True))
 			else:
 				self._current_action_code = "000"
 		elif event == Events.PRINT_CANCELLED:
-			if self._mmf_print: # Send message back to UI to confirm clearing of bed.
+			if self._mmf_print and not self._settings.get_boolean(["bypass_bed_clear"]): # Send message back to UI to confirm clearing of bed.
 				self._settings.set_boolean(["mmf_print_cancelled"],True)
 				self._settings.save()
 				self._plugin_manager.send_plugin_message(self._identifier, dict(mmf_print_cancelled=True))
@@ -101,19 +102,11 @@ class MyMiniFactoryPlugin(octoprint.plugin.SettingsPlugin,
 	def on_startup(self, host, port):
 		if self._settings.get_boolean(["mmf_print_complete"]) == False and self._settings.get_boolean(["mmf_print_cancelled"]) == False:
 			self._current_action_code = "000"
-		
-		self.mqtt_connect()
-		
-		if not self._settings.get_boolean(["registration_complete"]):
-			url = "https://www.myminifactory.com/api/v2/printers?automatic_slicing=1"
-			headers = {'X-Api-Key': self._settings.get(["client_key"])}
-			response = requests.get(url, headers=headers)
-			if response.status_code == 200:
-				self._logger.debug("Received printers: %s" % response.text)
-				filtered_printers = list(filter(lambda d: d['model'], json.loads(response.text)["items"]))
-				self._settings.set(["supported_printers"],filtered_printers)
-			else:
-				self._logger.debug("Error getting printers: %s" % response)
+
+		if self._settings.get_boolean(["registration_complete"]):
+			self.mqtt_connect()
+		else:
+			self._settings.set(["supported_printers"],self.get_supported_printers())
 
 	def on_after_startup(self):
 		if self._mqtt is None:
@@ -179,12 +172,15 @@ class MyMiniFactoryPlugin(octoprint.plugin.SettingsPlugin,
 				self._plugin_manager.send_plugin_message(self._identifier, dict(error=response.status_code))
 				
 		if command == "forget_printer":
+			new_supported_printers = self.get_supported_printers()
 			self.mqtt_disconnect(force=True)
 			self._settings.set(["printer_serial_number"],"")
 			self._settings.set(["printer_token"],"")
 			self._settings.set_boolean(["registration_complete"], False)
+			self._settings.set(["supported_printers"],new_supported_printers)
 			self._settings.save()
-			self._plugin_manager.send_plugin_message(self._identifier, dict(printer_removed=True))
+			#self._plugin_manager.send_plugin_message(self._identifier, dict(printer_removed=True))
+			return flask.jsonify({"printer_removed":True,"supported_printers":new_supported_printers})
 			
 		if command == "mmf_print_complete":
 			self._mmf_print = False
@@ -204,6 +200,17 @@ class MyMiniFactoryPlugin(octoprint.plugin.SettingsPlugin,
 				self._current_temp_bed = data["bed"]["actual"]
 
 	##~~ MyMiniFactory Functions
+
+	def get_supported_printers(self):
+		url = "https://www.myminifactory.com/api/v2/printers?automatic_slicing=1"
+		headers = {'X-Api-Key': self._settings.get(["client_key"])}
+		response = requests.get(url, headers=headers)
+		if response.status_code == 200:
+			self._logger.debug("Received printers: %s" % response.text)
+			filtered_printers = list(filter(lambda d: d['model'], json.loads(response.text)["items"]))
+			return filtered_printers
+		else:
+			self._logger.debug("Error getting printers: %s" % response)
 
 	def send_status(self):
 		printer_disconnected = self._printer.is_closed_or_error()

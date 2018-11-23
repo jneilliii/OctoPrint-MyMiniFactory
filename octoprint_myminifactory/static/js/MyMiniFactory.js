@@ -25,6 +25,7 @@ $(function() {
 		self.qr_image_url = ko.observable('');
 		self.mmf_print_complete = ko.observable();
 		self.mmf_print_cancelled = ko.observable();
+		self.bypass_bed_clear = ko.observable();
 		self.supported_manufacturers = ko.computed(function() {
 				var seen =[];
 				return ko.utils.arrayFilter(self.supported_printers(), function(item) {
@@ -50,6 +51,7 @@ $(function() {
 			self.printer_token(self.settingsViewModel.settings.plugins.myminifactory.printer_token());
 			self.mmf_print_complete(self.settingsViewModel.settings.plugins.myminifactory.mmf_print_complete());
 			self.mmf_print_cancelled(self.settingsViewModel.settings.plugins.myminifactory.mmf_print_cancelled());
+			self.bypass_bed_clear(self.settingsViewModel.settings.plugins.myminifactory.bypass_bed_clear());
 		}
 		
 		self.onAfterBinding = function() {
@@ -75,6 +77,7 @@ $(function() {
 			self.printer_token(self.settingsViewModel.settings.plugins.myminifactory.printer_token());
 			self.mmf_print_complete(self.settingsViewModel.settings.plugins.myminifactory.mmf_print_complete());
 			self.mmf_print_cancelled(self.settingsViewModel.settings.plugins.myminifactory.mmf_print_cancelled());
+			self.bypass_bed_clear(self.settingsViewModel.settings.plugins.myminifactory.bypass_bed_clear());
 		}
 		
 		self.onSettingsBeforeSave = function() {
@@ -83,6 +86,7 @@ $(function() {
 			self.settingsViewModel.settings.plugins.myminifactory.printer_manufacturer(self.printer_manufacturer());
 			self.settingsViewModel.settings.plugins.myminifactory.printer_serial_number(self.printer_serial_number());
 			self.settingsViewModel.settings.plugins.myminifactory.printer_token(self.printer_token());
+			self.settingsViewModel.settings.plugins.myminifactory.bypass_bed_clear(self.bypass_bed_clear());
 		}
 
 		self.onDataUpdaterPluginMessage = function(plugin, data) {
@@ -199,6 +203,17 @@ $(function() {
 					command: "forget_printer"
 				}),
 				contentType: "application/json; charset=UTF-8"
+			}).done(function(response){
+				if (data.printer_removed){
+					console.log('Printer forgotten, reloading list of supported printers.');
+					console.log(data.supported_printers);
+					self.qr_image_url('');
+					self.registration_complete(false);
+					self.forgetting(false);
+					self.printer_serial_number('');
+					self.supported_printers(data.supported_printers);
+					$("#MyMiniFactoryForgetWarning").modal("hide");
+				}
 			});
 		}
 	}
