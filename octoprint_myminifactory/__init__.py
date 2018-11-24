@@ -202,12 +202,12 @@ class MyMiniFactoryPlugin(octoprint.plugin.SettingsPlugin,
 	##~~ MyMiniFactory Functions
 
 	def get_supported_printers(self):
-		url = "https://www.myminifactory.com/api/v2/printers?automatic_slicing=1"
+		url = "https://www.myminifactory.com/api/v2/printers"
 		headers = {'X-Api-Key': self._settings.get(["client_key"])}
 		response = requests.get(url, headers=headers)
 		if response.status_code == 200:
 			self._logger.debug("Received printers: %s" % response.text)
-			filtered_printers = list(filter(lambda d: d['model'], json.loads(response.text)["items"]))
+			filtered_printers = list(filter(lambda d: (d['model'] and d['automatic_slicing'] == 1), json.loads(response.text)["items"]))
 			return filtered_printers
 		else:
 			self._logger.debug("Error getting printers: %s" % response)

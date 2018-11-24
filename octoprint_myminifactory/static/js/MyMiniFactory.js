@@ -204,14 +204,21 @@ $(function() {
 				}),
 				contentType: "application/json; charset=UTF-8"
 			}).done(function(response){
-				if (data.printer_removed){
+				if (response.printer_removed){
 					console.log('Printer forgotten, reloading list of supported printers.');
-					console.log(data.supported_printers);
+					console.log(response.supported_printers);
 					self.qr_image_url('');
 					self.registration_complete(false);
 					self.forgetting(false);
 					self.printer_serial_number('');
-					self.supported_printers(data.supported_printers);
+					new_supported_printers = ko.utils.arrayMap(response.supported_printers,function(item){
+						var new_item = {}
+						for (x in item){
+							new_item[x] = ko.observable(item[x]);
+						}
+						return new_item;
+					});
+					self.supported_printers(new_supported_printers);
 					$("#MyMiniFactoryForgetWarning").modal("hide");
 				}
 			});
