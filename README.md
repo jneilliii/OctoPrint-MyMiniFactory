@@ -11,7 +11,7 @@ or manually using this URL:
 
 ## Setup
 
-Once installed go into OctoPrint Settings > MyMiniFactory&reg; and select your connected printer's manufacturer and model and click the register button.  A QR code will be generated that can be scanned in the MyMiniFactory&reg; mobile application and associates with your account. Once registration is complete the printer should be listed in the mobile application as either Free, Busy, or Offline based on the current state.
+Once installed go into OctoPrint Settings > MyMiniFactory&reg; and select your connected printer's manufacturer and model and click the register button.  A QR code will be generated that can be scanned in the MyMiniFactory&reg; mobile application ([Android](https://play.google.com/store/apps/details?id=com.myminifactoryapps&hl=en) or [iOS](https://itunes.apple.com/us/app/myminifactory/id1313773617?mt=8)) and associates with your account. Once registration is complete the printer should be listed in the mobile application as either Free, Busy, or Offline based on the current state.
 
 ## Printing
 

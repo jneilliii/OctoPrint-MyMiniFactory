@@ -35,8 +35,7 @@
 		<img alt="MyMiniFactory QR Code" data-bind="attr: {src:qr_image_url()}" width="300px" height="300px">
 	</div>
 	<div class="row-fluid" data-bind="visible: qr_image_url().length > 0" style="display: none;text-align: center;padding-bottom: 25px;">
-		<div style="max-width: 230px;width: 230px;display: inline-block;">Scan the above QR code in the MyMiniFactory mobile application to complete printer registration.</div>
-		<div class="row-fluid" data-bind="if: registration_complete()"><span data-bind="text: printer_token"/></span></div>
+		<div style="max-width: 400px;width: 400px;display: inline-block;">Scan the above QR code in the MyMiniFactory mobile application for <a href="https://play.google.com/store/apps/details?id=com.myminifactoryapps&hl=en" target="_blank">Android</a> or <a href="https://itunes.apple.com/us/app/myminifactory/id1313773617?mt=8" target="_blank">iOS</a> to complete printer registration (Profile > Settings > Connect 3D Printer).</div>
 	</div>
 	<div class="row-fluid" style="text-align: center;">
 		<button class="btn btn-primary" data-bind="disable: registering(),click: get_qr_image_url, visible: qr_image_url().length == 0"><i class="fa fa-spinner fa-spin" data-bind="visible: registering()" style="display: none;"></i> Get QR Code</button> <button class="btn btn-danger" data-bind="disable: forgetting(),click: confirm_forget, visible: registration_complete()" style="display:none;"><i class="fa fa-spinner fa-spin" data-bind="visible: forgetting()" style="display: none;"></i> Forget</button>

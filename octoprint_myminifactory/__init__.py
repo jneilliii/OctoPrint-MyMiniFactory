@@ -85,6 +85,7 @@ class MyMiniFactoryPlugin(octoprint.plugin.SettingsPlugin,
 				self._plugin_manager.send_plugin_message(self._identifier, dict(mmf_print_complete=True))
 			else:
 				self._current_action_code = "000"
+				self._mmf_print = False
 		elif event == Events.PRINT_CANCELLED:
 			if self._mmf_print and not self._settings.get_boolean(["bypass_bed_clear"]): # Send message back to UI to confirm clearing of bed.
 				self._settings.set_boolean(["mmf_print_cancelled"],True)
@@ -92,6 +93,7 @@ class MyMiniFactoryPlugin(octoprint.plugin.SettingsPlugin,
 				self._plugin_manager.send_plugin_message(self._identifier, dict(mmf_print_cancelled=True))
 			else:
 				self._current_action_code = "000"
+				self._mmf_print = False
 		if event == Events.PRINT_PAUSED:
 			self._current_action_code = "101"
 		if event == Events.PRINT_RESUMED:
@@ -157,7 +159,7 @@ class MyMiniFactoryPlugin(octoprint.plugin.SettingsPlugin,
 			if response.status_code == 200:
 				serialized_response = json.loads(response.text)
 				self._logger.debug(json.dumps(serialized_response))
-				if serialized_response["printer_token"] != self._settings.get(["printer_token"]) and self._settings.get(["printer_token"]) == "":
+				if serialized_response["printer_token"] != self._settings.get(["printer_token"]):
 					self.mqtt_disconnect(force=True)
 					self._settings.set(["printer_token"],serialized_response["printer_token"])
 					self._settings.set(["printer_manufacturer"],data["manufacturer"])
