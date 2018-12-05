@@ -259,7 +259,8 @@ class MyMiniFactoryPlugin(octoprint.plugin.SettingsPlugin,
 
 		if response.status_code == 200:
 			# Save file to uploads folder
-			gcode_download_file = "%s/%s" % (self._settings.global_get_basefolder("uploads"),action["filename"])
+			gcode_file_name = self._file_manager.sanitize_name("local",action["filename"])
+			gcode_download_file = "%s/%s" % (self._settings.global_get_basefolder("uploads"),gcode_file_name)
 			self._logger.debug("Saving file: %s" % gcode_download_file)
 			with open(gcode_download_file, 'w') as f:
 				f.write(response.text)
@@ -267,15 +268,15 @@ class MyMiniFactoryPlugin(octoprint.plugin.SettingsPlugin,
 			# Add downloaded file to analysisqueue
 			printer_profile = self._printer_profile_manager.get("_default")
 			if version.get_octoprint_version() > version.get_comparable_version("1.3.9"):
-				entry = QueueEntry(action["filename"],gcode_download_file,"gcode","local",gcode_download_file, printer_profile, None)
+				entry = QueueEntry(gcode_file_name,gcode_download_file,"gcode","local",gcode_download_file, printer_profile, None)
 			else:
-				entry = QueueEntry(action["filename"],gcode_download_file,"gcode","local",gcode_download_file, printer_profile)
+				entry = QueueEntry(gcode_file_name,gcode_download_file,"gcode","local",gcode_download_file, printer_profile)
 			self._analysis_queue.enqueue(entry,high_priority=True) 
 
 			# Select file downloaded and start printing if auto_start_print is enabled and not already printing
 			if self._printer.is_ready():
 				self._mmf_print = True
-				self._printer.select_file(action["filename"], False, printAfterSelect=self._settings.get_boolean(["auto_start_print"]))
+				self._printer.select_file(gcode_file_name, False, printAfterSelect=self._settings.get_boolean(["auto_start_print"]))
 			else:
 				self._logger.debug("Printer not ready, not selecting file to print.")
 		else:
