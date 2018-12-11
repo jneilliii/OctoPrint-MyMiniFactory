@@ -352,6 +352,8 @@ class MyMiniFactoryPlugin(octoprint.plugin.SettingsPlugin,
 		action = json.loads(message)
 		if action["action_code"] == "100":
 			self._logger.debug("received prepare command")
+			self._current_action_code = "100"
+			self.send_status()
 
 		if action["action_code"] == "101":
 			self._logger.debug("received print command")
