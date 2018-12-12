@@ -35,7 +35,7 @@ class MyMiniFactoryPlugin(octoprint.plugin.SettingsPlugin,
 		self._printer_status = {"000":"free",
 								"100":"prepare",
 								"101":"printing",
-								"102":"printing",
+								"102":"paused",
 								"103":"free",
 								"104":"printing",
 								"999":"offline"}
@@ -95,7 +95,7 @@ class MyMiniFactoryPlugin(octoprint.plugin.SettingsPlugin,
 				self._current_action_code = "000"
 				self._mmf_print = False
 		if event == Events.PRINT_PAUSED:
-			self._current_action_code = "101"
+			self._current_action_code = "102"
 		if event == Events.PRINT_RESUMED:
 			self._current_action_code = "101"
 
@@ -276,12 +276,17 @@ class MyMiniFactoryPlugin(octoprint.plugin.SettingsPlugin,
 			# Select file downloaded and start printing if auto_start_print is enabled and not already printing
 			if self._printer.is_ready():
 				self._mmf_print = True
+				self._current_action_code = "101"
 				self._printer.select_file(gcode_file_name, False, printAfterSelect=self._settings.get_boolean(["auto_start_print"]))
 			else:
+				self._current_action_code = "000"
 				self._logger.debug("Printer not ready, not selecting file to print.")
 		else:
 			self._logger.debug("API Error: %s" % response)
+			self._current_action_code = "000"
 			self._plugin_manager.send_plugin_message(self._identifier, dict(error=response.status_code))
+
+		self.send_status()
 
 	##~~ MQTT Functions
 
