@@ -35,7 +35,7 @@ class MyMiniFactoryPlugin(octoprint.plugin.SettingsPlugin,
 		self._printer_status = {"000":"free",
 								"100":"prepare",
 								"101":"printing",
-								"102":"printing",
+								"102":"paused",
 								"103":"free",
 								"104":"printing",
 								"999":"offline"}
@@ -95,7 +95,7 @@ class MyMiniFactoryPlugin(octoprint.plugin.SettingsPlugin,
 				self._current_action_code = "000"
 				self._mmf_print = False
 		if event == Events.PRINT_PAUSED:
-			self._current_action_code = "101"
+			self._current_action_code = "102"
 		if event == Events.PRINT_RESUMED:
 			self._current_action_code = "101"
 
@@ -255,7 +255,7 @@ class MyMiniFactoryPlugin(octoprint.plugin.SettingsPlugin,
 		payload = dict(task_id = action["task_id"],printer_token = self._settings.get(["printer_token"]))
 		headers = {'X-Api-Key': self._settings.get(["client_key"])}
 		self._logger.debug("Sending parameters: %s with header: %s" % (payload,headers))
-		response = requests.get(url, params=payload, headers=headers)
+		response = requests.get(url, params=payload, headers=headers, stream=True)
 
 		if response.status_code == 200:
 			# Save file to uploads folder
@@ -263,7 +263,10 @@ class MyMiniFactoryPlugin(octoprint.plugin.SettingsPlugin,
 			gcode_download_file = "%s/%s" % (self._settings.global_get_basefolder("uploads"),gcode_file_name)
 			self._logger.debug("Saving file: %s" % gcode_download_file)
 			with open(gcode_download_file, 'w') as f:
-				f.write(response.text)
+				for chunk in response.iter_content(chunk_size=1024): 
+					if chunk: # filter out keep-alive new chunks
+						f.write(chunk)
+						#f.write(response.text)
 				
 			# Add downloaded file to analysisqueue
 			printer_profile = self._printer_profile_manager.get("_default")
@@ -352,6 +355,12 @@ class MyMiniFactoryPlugin(octoprint.plugin.SettingsPlugin,
 		action = json.loads(message)
 		if action["action_code"] == "100":
 			self._logger.debug("received prepare command")
+			self._current_action_code = "100"
+			self.send_status()
+			time.sleep(10)
+			self._logger.debug("prepartion complete status set to free")
+			self._current_action_code = "000"
+			self.send_status()
 
 		if action["action_code"] == "101":
 			self._logger.debug("received print command")
