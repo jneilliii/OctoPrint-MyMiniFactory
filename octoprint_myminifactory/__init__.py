@@ -33,7 +33,7 @@ class MyMiniFactoryPlugin(octoprint.plugin.SettingsPlugin,
 		self._current_temp_bed = 0
 		self._mmf_print = False
 		self._printer_status = {"000":"free",
-								"100":"prepare",
+								"100":"printing", #"prepare",
 								"101":"printing",
 								"102":"paused",
 								"103":"free",
@@ -255,7 +255,7 @@ class MyMiniFactoryPlugin(octoprint.plugin.SettingsPlugin,
 		payload = dict(task_id = action["task_id"],printer_token = self._settings.get(["printer_token"]))
 		headers = {'X-Api-Key': self._settings.get(["client_key"])}
 		self._logger.debug("Sending parameters: %s with header: %s" % (payload,headers))
-		response = requests.get(url, params=payload, headers=headers)
+		response = requests.get(url, params=payload, headers=headers, stream=True)
 
 		if response.status_code == 200:
 			# Save file to uploads folder
@@ -263,8 +263,11 @@ class MyMiniFactoryPlugin(octoprint.plugin.SettingsPlugin,
 			gcode_download_file = "%s/%s" % (self._settings.global_get_basefolder("uploads"),gcode_file_name)
 			self._logger.debug("Saving file: %s" % gcode_download_file)
 			with open(gcode_download_file, 'w') as f:
-				f.write(response.text)
-				
+				for chunk in response.iter_content(chunk_size=1024): 
+					if chunk: # filter out keep-alive new chunks
+						f.write(chunk)
+						#f.write(response.text)
+
 			# Add downloaded file to analysisqueue
 			printer_profile = self._printer_profile_manager.get("_default")
 			if version.get_octoprint_version() > version.get_comparable_version("1.3.9"):
@@ -281,6 +284,7 @@ class MyMiniFactoryPlugin(octoprint.plugin.SettingsPlugin,
 			else:
 				self._current_action_code = "000"
 				self._logger.debug("Printer not ready, not selecting file to print.")
+				self._plugin_manager.send_plugin_message(self._identifier, dict(error="Printer not ready, not selecting file to print."))
 		else:
 			self._logger.debug("API Error: %s" % response)
 			self._current_action_code = "000"
