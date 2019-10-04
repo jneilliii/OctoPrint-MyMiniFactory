@@ -7,6 +7,7 @@ from octoprint.util import version
 from octoprint.events import Events
 from octoprint.filemanager.analysis import QueueEntry
 from datetime import datetime
+from past.builtins import basestring
 import requests
 import flask
 import json
@@ -449,6 +450,7 @@ class MyMiniFactoryPlugin(octoprint.plugin.SettingsPlugin,
 
 
 __plugin_name__ = "MyMiniFactory"
+__plugin_pythoncompat__ = ">=2.7,<4"
 
 def __plugin_load__():
 	global __plugin_implementation__
