@@ -44,7 +44,7 @@ $(function() {
 
 		self.onBeforeBinding = function() {
 			self.registration_complete(self.settingsViewModel.settings.plugins.myminifactory.registration_complete());
-			self.supported_printers(self.settingsViewModel.settings.plugins.myminifactory.supported_printers());
+			//self.supported_printers(self.settingsViewModel.settings.plugins.myminifactory.supported_printers());
 			self.printer_model(self.settingsViewModel.settings.plugins.myminifactory.printer_model());
 			self.printer_manufacturer(self.settingsViewModel.settings.plugins.myminifactory.printer_manufacturer());
 			self.printer_serial_number(self.settingsViewModel.settings.plugins.myminifactory.printer_serial_number());
@@ -52,6 +52,25 @@ $(function() {
 			self.mmf_print_complete(self.settingsViewModel.settings.plugins.myminifactory.mmf_print_complete());
 			self.mmf_print_cancelled(self.settingsViewModel.settings.plugins.myminifactory.mmf_print_cancelled());
 			self.bypass_bed_clear(self.settingsViewModel.settings.plugins.myminifactory.bypass_bed_clear());
+			$.ajax({
+				type: 'GET',
+				url: "https://www.myminifactory.com/api/v2/printers?automatic_slicing=1&per_page=-1",
+				headers: {
+					"X-Api-Key": "acGxgLJmvgTZU2RDZ3vQaiitxc5Bf6DDeHL1",
+				}
+			}).done(function (data) {
+				console.log(data);
+				var new_supported_printers = ko.utils.arrayMap(data,function(item){
+					var new_item = {}
+					for (x in item){
+						new_item[x] = ko.observable(item[x]);
+					}
+					return new_item;
+				});
+				self.supported_printers(new_supported_printers);
+				self.forgetting(false);
+				$("#MyMiniFactoryForgetWarning").modal("hide");
+			});
 		}
 		
 		self.onAfterBinding = function() {
@@ -206,20 +225,29 @@ $(function() {
 			}).done(function(response){
 				if (response.printer_removed){
 					console.log('Printer forgotten, reloading list of supported printers.');
-					console.log(response.supported_printers);
-					self.qr_image_url('');
-					self.registration_complete(false);
-					self.forgetting(false);
-					self.printer_serial_number('');
-					new_supported_printers = ko.utils.arrayMap(response.supported_printers,function(item){
-						var new_item = {}
-						for (x in item){
-							new_item[x] = ko.observable(item[x]);
+					//console.log(response.supported_printers);
+					$.ajax({
+						type: 'GET',
+						url: "https://www.myminifactory.com/api/v2/printers?automatic_slicing=1&per_page=-1",
+						headers: {
+							"X-Api-Key": "acGxgLJmvgTZU2RDZ3vQaiitxc5Bf6DDeHL1",
 						}
-						return new_item;
+					}).done(function (data) {
+						console.log(data);
+						self.qr_image_url('');
+						self.registration_complete(false);
+						self.printer_serial_number('');
+						var new_supported_printers = ko.utils.arrayMap(data,function(item){
+							var new_item = {}
+							for (x in item){
+								new_item[x] = ko.observable(item[x]);
+							}
+							return new_item;
+						});
+						self.supported_printers(new_supported_printers);
+						self.forgetting(false);
+						$("#MyMiniFactoryForgetWarning").modal("hide");
 					});
-					self.supported_printers(new_supported_printers);
-					$("#MyMiniFactoryForgetWarning").modal("hide");
 				}
 			});
 		}

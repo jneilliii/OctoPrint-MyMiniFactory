@@ -174,15 +174,15 @@ class MyMiniFactoryPlugin(octoprint.plugin.SettingsPlugin,
 				self._plugin_manager.send_plugin_message(self._identifier, dict(error=response.status_code))
 				
 		if command == "forget_printer":
-			new_supported_printers = self.get_supported_printers()
+			#new_supported_printers = self.get_supported_printers()
 			self.mqtt_disconnect(force=True)
 			self._settings.set(["printer_serial_number"],"")
 			self._settings.set(["printer_token"],"")
 			self._settings.set_boolean(["registration_complete"], False)
-			self._settings.set(["supported_printers"],new_supported_printers)
+			#self._settings.set(["supported_printers"],new_supported_printers)
 			self._settings.save()
 			#self._plugin_manager.send_plugin_message(self._identifier, dict(printer_removed=True))
-			return flask.jsonify({"printer_removed":True,"supported_printers":new_supported_printers})
+			return flask.jsonify({"printer_removed":True}) #,"supported_printers":new_supported_printers})
 			
 		if command == "mmf_print_complete":
 			self._mmf_print = False
