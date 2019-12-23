@@ -60,7 +60,7 @@ $(function() {
 				}
 			}).done(function (data) {
 				console.log(data);
-				var new_supported_printers = ko.utils.arrayMap(data,function(item){
+				var new_supported_printers = ko.utils.arrayMap(data.items,function(item){
 					var new_item = {}
 					for (x in item){
 						new_item[x] = ko.observable(item[x]);
